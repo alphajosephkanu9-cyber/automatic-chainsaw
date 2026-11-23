@@ -1,0 +1,68 @@
+Missing values
+---------------------------------------------------------------------------
+SELECT
+    SUM(Order_ID IS NULL) AS Missing_Order_ID,
+    SUM(Order_Date IS NULL OR Order_Date = '') AS Missing_Order_Date,
+    SUM(Order_Time IS NULL OR Order_Time = '') AS Missing_Order_Time,
+    SUM(Branch_ID IS NULL OR Branch_ID = '') AS Missing_Branch_ID,
+    SUM(Customer_ID IS NULL OR Customer_ID = '') AS Missing_Customer_ID,
+    SUM(Order_Type IS NULL OR Order_Type = '') AS Missing_Order_Type,
+    SUM(Payment_Method IS NULL OR Payment_Method = '') AS Missing_Payment_Method,
+    SUM(Order_Status IS NULL OR Order_Status = '') AS Missing_Order_Status,
+    SUM(Discount IS NULL) AS Missing_Order_Discount
+FROM orders;
+
+Duplicate order identifiers
+---------------------------------------------------------------------------
+SELECT Order_ID, COUNT(*) AS Duplicate_Count
+FROM orders
+GROUP BY Order_ID
+HAVING COUNT(*) > 1
+ORDER BY Duplicate_Count DESC;
+
+Order status, order type, and payment method values
+---------------------------------------------------------------------------    
+SELECT Order_Status, COUNT(*) AS Orders
+FROM orders
+GROUP BY Order_Status
+ORDER BY Orders DESC;
+
+SELECT Order_Type, COUNT(*) AS Orders
+FROM orders
+GROUP BY Order_Type
+ORDER BY Orders DESC;
+
+SELECT Payment_Method, COUNT(*) AS Orders
+FROM orders
+GROUP BY Payment_Method
+ORDER BY Orders DESC;
+
+Check order date format and date range
+--------------------------------------------------------------------------- 
+SELECT
+    MIN(Order_Date) AS Earliest_Order_Date,
+    MAX(Order_Date) AS Latest_Order_Date,
+    SUM(STR_TO_DATE(Order_Date, '%Y-%m-%d') IS NULL) AS Unparseable_Dates
+FROM orders;
+
+Discount_Level_Measure
+--------------------------------------------------------------------------- 
+SELECT
+    MIN(Discount) AS Minimum_Discount,
+    MAX(Discount) AS Maximum_Discount,
+    AVG(Discount) AS Average_Discount,
+    SUM(Discount < 0 OR Discount > 1) AS Discounts_Out_Of_Range
+FROM orders;
+
+Orders with missing branch/customer references
+---------------------------------------------------------------------------
+    
+SELECT COUNT(*) AS Orders_Without_Matching_Branch
+FROM orders o
+LEFT JOIN branches b ON o.Branch_ID = b.Branch_ID
+WHERE b.Branch_ID IS NULL;
+
+SELECT COUNT(*) AS Orders_Without_Matching_Customer
+FROM orders o
+LEFT JOIN customers c ON o.Customer_ID = c.Customer_ID
+WHERE c.Customer_ID IS NULL;

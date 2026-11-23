@@ -1,0 +1,39 @@
+Overall gross profit summary
+------------------------------------------------------------------------------------------------------------
+SELECT
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 2) AS Revenue,
+    ROUND(SUM(od.Quantity * od.Unit_Cost), 2) AS Total_Cost,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost), 2) AS Gross_Profit,
+    ROUND((SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost)) / NULLIF(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 0) * 100, 2) AS Gross_Profit_Margin
+FROM orders o
+JOIN order_details od ON o.Order_ID = od.Order_ID
+WHERE o.Order_Status = 'Completed';
+
+Gross profit by branch
+------------------------------------------------------------------------------------------------------------
+SELECT
+    b.Branch_Name,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 2) AS Revenue,
+    ROUND(SUM(od.Quantity * od.Unit_Cost), 2) AS Total_Cost_Per_Branch,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost), 2) AS Gross_Profit,
+    ROUND((SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost)) / NULLIF(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 0) * 100, 2) AS Gross_Profit_Margin
+FROM orders o
+JOIN order_details od ON o.Order_ID = od.Order_ID
+JOIN branches b ON o.Branch_ID = b.Branch_ID
+WHERE o.Order_Status = 'Completed'
+GROUP BY b.Branch_ID, b.Branch_Name
+ORDER BY Gross_Profit DESC;
+
+Monthly gross profit and margin
+------------------------------------------------------------------------------------------------------------
+SELECT
+DATE_FORMAT(STR_TO_DATE(o.Order_Date, '%Y-%m-%d'), '%Y-%m') AS Profit_Month, 
+ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 2) AS Revenue,
+ROUND(SUM(od.Quantity * od.Unit_Cost), 2) AS Recorded_Cost,
+ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost), 2) AS Gross_Profit,
+ROUND((SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost)) / NULLIF(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 0) * 100, 2) AS Gross_Profit_Margin
+FROM orders o
+JOIN order_details od ON o.Order_ID = od.Order_ID
+WHERE o.Order_Status = 'Completed'
+GROUP BY Profit_Month
+ORDER BY Profit_Month;

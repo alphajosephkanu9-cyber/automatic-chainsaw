@@ -1,0 +1,52 @@
+Customer value and purchase frequency (top 20 by revenue)
+----------------------------------------------------------------------------
+SELECT
+    o.Customer_ID,
+    COUNT(DISTINCT o.Order_ID) AS Completed_Orders,
+    SUM(od.Quantity) AS Units_Purchased,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 2) AS Customer_Revenue,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) / COUNT(DISTINCT o.Order_ID), 2) AS Customer_Average_Order_Value,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost), 2) AS Gross_Profit_Per_Customer
+FROM orders o
+JOIN order_details od ON o.Order_ID = od.Order_ID
+WHERE o.Order_Status = 'Completed'
+GROUP BY o.Customer_ID
+ORDER BY Customer_Revenue DESC
+LIMIT 20;
+
+Customer frequency segments
+----------------------------------------------------------------------------
+WITH Customer_Order_Frequency AS 
+(
+SELECT
+  Customer_ID,
+  COUNT(DISTINCT Order_ID) AS Order_Count
+  FROM orders
+  WHERE Order_Status = 'Completed'
+  GROUP BY Customer_ID
+)
+SELECT
+    CASE
+        WHEN Order_Count = 1 THEN '1 order'
+        WHEN Order_Count BETWEEN 2 AND 5 THEN '2-5 orders'
+        WHEN Order_Count BETWEEN 6 AND 10 THEN '6-10 orders'
+        ELSE '11+ orders'
+    END AS Purchase_Frequency_Group,
+    COUNT(*) AS Number_Of_Customers
+FROM Customer_Order_Frequency
+GROUP BY Purchase_Frequency_Group
+ORDER BY MIN(Order_Count);
+
+Repeat customer rate
+----------------------------------------------------------------------------
+WITH Customer_Frequency AS (
+    SELECT Customer_ID, COUNT(DISTINCT Order_ID) AS Order_Count
+    FROM orders
+    WHERE Order_Status = 'Completed'
+    GROUP BY Customer_ID
+)
+SELECT
+    COUNT(*) AS Customers,
+    SUM(Order_Count > 1) AS Repeat_Customers,
+    ROUND(SUM(Order_Count > 1) * 100.0 / COUNT(*), 2) AS Repeat_Customer_Rate
+FROM Customer_Frequency;

@@ -1,0 +1,40 @@
+Monthly sales trend
+-----------------------------------------------------------------------------------------------
+SELECT
+    DATE_FORMAT(STR_TO_DATE(o.Order_Date, '%Y-%m-%d'), '%Y-%m') AS Sales_Month,
+    COUNT(DISTINCT o.Order_ID) AS Completed_Orders,
+    SUM(od.Quantity) AS Units_Sold,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 2) AS Revenue,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) / COUNT(DISTINCT o.Order_ID), 2) AS Average_Order_Value
+FROM orders as o
+JOIN order_details as od ON o.Order_ID = od.Order_ID
+WHERE o.Order_Status = 'Completed'
+GROUP BY Sales_Month
+ORDER BY Sales_Month;
+
+Weekday vs. Weekend Distribution
+-----------------------------------------------------------------------------------------------
+SELECT
+    DAYOFWEEK(STR_TO_DATE(o.Order_Date, '%Y-%m-%d')) AS Day_Number,
+    DAYNAME(STR_TO_DATE(o.Order_Date, '%Y-%m-%d')) AS Day_Name,
+    COUNT(DISTINCT o.Order_ID) AS Completed_Orders,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 2) AS Revenue,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) / COUNT(DISTINCT o.Order_ID), 2) AS Average_Order_Value
+FROM orders o
+JOIN order_details od ON o.Order_ID = od.Order_ID
+WHERE o.Order_Status = 'Completed'
+GROUP BY Day_Number_Sunday_First, Day_Name
+ORDER BY Day_Number_Sunday_First;
+
+Hour-of-day pattern (Order_Time is assumed to be HH:MM or HH:MM:SS)
+-----------------------------------------------------------------------------------------------
+SELECT HOUR(STR_TO_DATE(o.Order_Time, '%H:%i:%s')) AS Order_Hour,
+COUNT(DISTINCT o.Order_ID) AS Completed_Orders,
+ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 2) AS Revenue,
+ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) / COUNT(DISTINCT o.Order_ID), 2) AS Average_Order_Value
+FROM orders as o
+JOIN order_details as od ON o.Order_ID = od.Order_ID
+WHERE o.Order_Status = 'Completed'
+GROUP BY Order_Hour
+ORDER BY Order_Hour;
+

@@ -1,0 +1,33 @@
+Branch sales, gross profit, margin, and AOV
+-------------------------------------------------------------------------------------
+SELECT
+    b.Branch_ID,
+    b.Branch_Name,
+    COUNT(DISTINCT o.Order_ID) AS Completed_Orders,
+    SUM(od.Quantity) AS Units_Sold,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 2) AS Revenue,
+    ROUND(SUM(od.Quantity * od.Unit_Cost), 2) AS Recorded_Cost,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost), 2) AS Gross_Profit,
+    ROUND((SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost)) / NULLIF(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 0) * 100, 2) AS Gross_Profit_Margin,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) / COUNT(DISTINCT o.Order_ID), 2) AS Average_Order_Value
+FROM orders as o
+JOIN order_details as od ON o.Order_ID = od.Order_ID
+JOIN branches as b ON o.Branch_ID = b.Branch_ID
+WHERE o.Order_Status = 'Completed'
+GROUP BY b.Branch_ID, b.Branch_Name
+ORDER BY Revenue DESC;
+
+Branch sales by order type
+-------------------------------------------------------------------------------------
+SELECT
+    b.Branch_Name,
+    o.Order_Type,
+    COUNT(DISTINCT o.Order_ID) AS Completed_Orders,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 2) AS Revenue,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) / COUNT(DISTINCT o.Order_ID), 2) AS Average_Order_Value
+FROM orders o
+JOIN order_details od ON o.Order_ID = od.Order_ID
+JOIN branches b ON o.Branch_ID = b.Branch_ID
+WHERE o.Order_Status = 'Completed'
+GROUP BY b.Branch_Name, o.Order_Type
+ORDER BY b.Branch_Name, Revenue DESC;

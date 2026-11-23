@@ -1,0 +1,25 @@
+Business overview with completed orders only
+---------------------------------------------------------------------------------
+SELECT
+    COUNT(DISTINCT o.Order_ID) AS Completed_Orders,
+    COUNT(DISTINCT o.Customer_ID) AS Unique_Customers,
+    SUM(od.Quantity) AS Units_Sold,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))), 2) AS Revenue_After_Item_Discount,
+    ROUND(SUM(od.Quantity * od.Unit_Cost), 2) AS Recorded_Cost,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost), 2) AS Gross_Profit,
+    ROUND((SUM(od.Quantity * od.Unit_Price *(1 - COALESCE(od.Item_Discount, 0))) - SUM(od.Quantity * od.Unit_Cost)) / NULLIF(SUM(od.Quantity * od.Unit_Price *(1 - COALESCE(od.Item_Discount, 0))), 0) * 100, 2) AS Gross_Profit_Margin
+FROM orders as o
+JOIN order_details as od ON o.Order_ID = od.Order_ID
+WHERE o.Order_Status = 'Completed';
+
+-- 2.2 Average order value, items per order, and orders per customer
+---------------------------------------------------------------------------------
+SELECT
+    COUNT(DISTINCT o.Order_ID) AS Completed_Orders,
+    COUNT(DISTINCT o.Customer_ID) AS Unique_Customers,
+    ROUND(SUM(od.Quantity * od.Unit_Price * (1 - COALESCE(od.Item_Discount, 0))) / COUNT(DISTINCT o.Order_ID), 2) AS Average_Order_Value,
+    ROUND(SUM(od.Quantity) / COUNT(DISTINCT o.Order_ID), 2) AS Average_Items_Per_Order,
+    ROUND(COUNT(DISTINCT o.Order_ID) / COUNT(DISTINCT o.Customer_ID), 2) AS Orders_Per_Customer
+FROM orders as o
+JOIN order_details as od ON o.Order_ID = od.Order_ID
+WHERE o.Order_Status = 'Completed';
